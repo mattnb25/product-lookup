@@ -1,6 +1,8 @@
 <script>
     import { onMount, tick } from "svelte";
-    let { data } = $props();
+    import { parseCsvToBarcodeMap } from "$lib/csvParser.js";
+    import csv from "$lib/home-tan.csv?raw";
+    const barcodeData = parseCsvToBarcodeMap(csv);
     let videoStream = $state(null);
     let detectedBarcode = $state(null); // Detected barcode from the camera
     let detectedData = $state(null); // Data linked to the detected barcode
@@ -44,7 +46,7 @@
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
                 detectedBarcode = barcodes[0].rawValue;
-                detectedData = data.barcodeData.get(detectedBarcode) || null;
+                detectedData = barcodeData.get(detectedBarcode) || null;
             }
             requestAnimationFrame(scan);
         };
@@ -60,14 +62,14 @@
 
 {#if detectedBarcode == null}
     <p>
-        Point your camera at a barcode for product information (updated {data.lastModified},
-        from Home Tan).
+        Point your camera at a barcode for product information (updated 12
+        December 2025, from Home Tan).
     </p>
     <video autoplay muted playsinline></video>
 {:else}
     {#if detectedData != null}
         <article>
-            <h2>Detected Barcode: {detectedBarcode}</h2>
+            <h2>{detectedBarcode}</h2>
             <dl>
                 <dt>Name</dt>
                 <dd>{detectedData.name}</dd>
@@ -98,13 +100,15 @@
     }
     dt {
         font-weight: bold;
+        font-size: 1.2rem;
     }
     dd {
         margin-left: 0rem;
         margin-bottom: 0.5rem;
+        font-size: 1.2rem;
     }
     button {
-        font-size: 1rem;
+        font-size: 1.2rem;
         cursor: pointer;
     }
 </style>
