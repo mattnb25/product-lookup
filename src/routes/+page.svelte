@@ -62,8 +62,8 @@
 
 {#if detectedBarcode == null}
     <p>
-        Point your camera at a barcode for product information (updated 12
-        December 2025, from Home Tan).
+        Point your camera at a barcode for product information (updated 31
+        January 2025, from Home Tan).
     </p>
     <video autoplay muted playsinline></video>
 {:else}
