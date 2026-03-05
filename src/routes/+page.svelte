@@ -86,6 +86,8 @@
   }
 </script>
 
+<p>updating page, may not work</p>
+
 {#if status === "idle"}
   <p>Please allow camera access and point your camera at a barcode.</p>
 {:else if status === "fetching"}
