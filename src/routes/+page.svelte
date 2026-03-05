@@ -111,7 +111,7 @@
 {/if}
 
 <style>
-  body {
+  :global(body) {
     font-family: apple-system, sans-serif;
     max-width: 400px;
     margin: auto;
@@ -121,7 +121,7 @@
     line-height: 1.5;
   }
 
-  video {
+  :global(video) {
     width: 100%;
     margin-bottom: 20px;
     background-color: #000;
