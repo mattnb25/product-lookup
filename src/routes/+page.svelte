@@ -1,114 +1,176 @@
 <script>
-    import { onMount, tick } from "svelte";
-    import { parseCsvToBarcodeMap } from "$lib/csvParser.js";
-    import csv from "$lib/home-tan.csv?raw";
-    const barcodeData = parseCsvToBarcodeMap(csv);
-    let videoStream = $state(null);
-    let detectedBarcode = $state(null); // Detected barcode from the camera
-    let detectedData = $state(null); // Data linked to the detected barcode
+  import { getProductByUpc } from "$lib/parser.js";
+  import { onMount } from "svelte";
 
-    // Start scanning for barcodes using the Barcode Detection API
-    async function startScanning() {
-        detectedBarcode = null;
-        detectedData = null;
+  // Don't prerender this page since it requires browser-only APIs
+  export const prerender = false;
 
-        // Wait for Svelte to update the DOM so the <video> element is present
-        await tick();
+  let status = $state("idle");
+  let barcode = $state(null);
+  let product = $state(null);
+  let barcodeDetector = $state(null);
+  let videoElement = $state(null);
 
-        if (!("BarcodeDetector" in window)) {
-            window["BarcodeDetector"] =
-                barcodeDetectorPolyfill.BarcodeDetectorPolyfill;
+  onMount(async () => {
+    // Import barcode detector only in browser
+    const { BarcodeDetectorPolyfill } = await import(
+      "@undecaf/barcode-detector-polyfill"
+    );
+    // Patch both standard and offscreen canvases
+    [HTMLCanvasElement, OffscreenCanvas].forEach((cls) => {
+      const _getContext = cls.prototype.getContext;
+      cls.prototype.getContext = function (type, attr) {
+        if (type === "2d") {
+          attr = { ...(attr || {}), willReadFrequently: true };
         }
+        return _getContext.call(this, type, attr);
+      };
+    });
 
-        const barcodeDetector = new BarcodeDetector({
-            formats: ["upc_a", "upc_e", "code_128", "ean_13", "ean_8"],
-        });
+    window.BarcodeDetector ||= BarcodeDetectorPolyfill;
+    barcodeDetector = new window.BarcodeDetector({
+      formats: ["upc_a", "upc_e", "code_128", "ean_13", "ean_8"],
+    });
 
-        const video = document.querySelector("video");
-        videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
-        });
-        video.srcObject = videoStream;
+    videoElement = document.querySelector("video");
+    toggleCamera();
+  });
 
-        await new Promise((resolve) => {
-            video.onloadedmetadata = resolve;
-        });
-
-        const scan = async () => {
-            if (detectedBarcode != null) {
-                videoStream.getTracks().forEach((track) => track.stop());
-                // Clear the video's srcObject so the element is detached from the stopped stream
-                if (video && video.srcObject) video.srcObject = null;
-                videoStream = null;
-                return;
-            }
-
-            const barcodes = await barcodeDetector.detect(video);
-            if (barcodes.length > 0) {
-                detectedBarcode = barcodes[0].rawValue;
-                detectedData = barcodeData.get(detectedBarcode) || null;
-            }
-            requestAnimationFrame(scan);
-        };
-
-        video.play();
-        scan();
+  async function scan() {
+    if (status !== "idle" || !barcodeDetector) return;
+    if (!videoElement || videoElement.readyState < 2) {
+      return setTimeout(scan, 250);
     }
 
-    onMount(() => {
-        startScanning();
-    });
+    const [detected] = await barcodeDetector.detect(videoElement);
+
+    if (detected) {
+      status = "fetching";
+      toggleCamera();
+
+      barcode =
+        detected.format === "upc_e"
+          ? detected.rawValue.slice(1, 7)
+          : detected.rawValue;
+
+      product = await getProductByUpc(barcode);
+      status = product ? "found" : "not-found";
+      return;
+    }
+
+    setTimeout(scan, 250);
+  }
+
+  async function toggleCamera() {
+    const isIdle = status === "idle";
+    if (isIdle) {
+      videoElement.srcObject = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      videoElement.hidden = false;
+      videoElement.play();
+      scan();
+    } else {
+      videoElement.pause();
+      videoElement.srcObject?.getTracks().forEach((track) => track.stop());
+      videoElement.srcObject = null;
+      videoElement.hidden = true;
+    }
+  }
+
+  function ScanAgain() {
+    status = "idle";
+    barcode = null;
+    product = null;
+    toggleCamera();
+  }
 </script>
 
-{#if detectedBarcode == null}
-    <p>
-        Point your camera at a barcode for product information (updated 31
-        January 2025, from Home Tan).
-    </p>
-    <video autoplay muted playsinline></video>
-{:else}
-    {#if detectedData != null}
-        <article>
-            <h2>{detectedBarcode}</h2>
-            <dl>
-                <dt>Name</dt>
-                <dd>{detectedData.name}</dd>
-                <dt>Price</dt>
-                <dd>${detectedData.price}</dd>
-            </dl>
-        </article>
-    {:else}
-        <p>No product information found for this barcode.</p>
-    {/if}
-    <button onclick={startScanning}>Scan Again</button>
+{#if status === "idle"}
+  <p>Please allow camera access and point your camera at a barcode.</p>
+{:else if status === "fetching"}
+  <p>Searching for {barcode}...</p>
+{:else if status === "not-found"}
+  <article>
+    <h2>ITEM: {barcode}</h2>
+    <p>Not found</p>
+  </article>
+  <button onclick={ScanAgain}>Scan Another Item</button>
+{:else if status === "found"}
+  <article>
+    <h2>ITEM: {barcode}</h2>
+    <dl>
+      <dt>Description</dt>
+      <dd>{product?.desc}</dd>
+
+      <dt>Price</dt>
+      <dd>${product?.price1?.toFixed(2)}</dd>
+    </dl>
+  </article>
+  <button onclick={ScanAgain}>Scan Another Item</button>
 {/if}
 
 <style>
-    * {
-        font-family: sans-serif;
-    }
-    :global(body) {
-        max-width: 70ch;
-        margin: auto;
-        padding: 0 1rem;
-    }
-    video {
-        display: block;
-        background-color: black;
-        max-height: 10rem;
-        width: 100%;
-    }
-    dt {
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    dd {
-        margin-left: 0rem;
-        margin-bottom: 0.5rem;
-        font-size: 1.2rem;
-    }
-    button {
-        font-size: 1.2rem;
-        cursor: pointer;
-    }
+  body {
+    font-family: apple-system, sans-serif;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px 20px;
+    background: #eee;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  video {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: #000;
+    aspect-ratio: 4/3;
+  }
+
+  p {
+    margin-top: 0;
+  }
+
+  article {
+    margin-bottom: 20px;
+  }
+
+  article h2 {
+    font-size: 0.8rem;
+    margin: 0;
+    margin-bottom: 10px;
+  }
+
+  dl {
+    margin: 0;
+  }
+
+  dt {
+    font-size: 0.8rem;
+    color: SlateGray;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    background: #000;
+    color: #eee;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:active {
+    opacity: 0.8;
+  }
 </style>
