@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { getProductByUpc, timeUpdated, timeColor } from "./parser.js";
+  import { getProductByUpc, timeUpdated, timeColor } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
   // Patch both standard and offscreen canvases
