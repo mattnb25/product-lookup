@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { getProductByUpc, timeUpdated, timeColor } from "./lib/parser.js";
+  import { initDatabase, getProductByUpc, timeUpdated, timeColor } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
   // Patch both standard and offscreen canvases
@@ -66,13 +66,16 @@
   }
 
   onMount(async () => {
+    await initDatabase();
     await toggleCamera();
   });
 </script>
 
 <video bind:this={videoElement} autoplay playsinline muted></video>
 
-{#if status === "idle"}
+{#if status === "loading"}
+  <p>Loading...</p>
+{:else if status === "idle"}
   <p>Please allow camera access and point your camera at a barcode.</p>
   <p>
     Data last updated
