@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { getProductByUpc } from "./lib/parser.js";
+  import { getProductByUpc, timeUpdated, timeColor } from "./parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
   // Patch both standard and offscreen canvases
@@ -74,6 +74,10 @@
 
 {#if status === "idle"}
   <p>Please allow camera access and point your camera at a barcode.</p>
+  <p>
+    Data last updated
+    <span style="color: {timeColor}">{timeUpdated}</span>
+  </p>
 {:else if status === "fetching"}
   <p>Searching for {barcode}...</p>
 {:else if status === "not-found"}
