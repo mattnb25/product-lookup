@@ -1,6 +1,11 @@
 <script>
   import { onMount } from "svelte";
-  import { initDatabase, getProductByUpc, timeUpdated, timeColor } from "./lib/parser.js";
+  import {
+    initDatabase,
+    getProductByUpc,
+    timeUpdated,
+    timeColor,
+  } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
   // Patch both standard and offscreen canvases
@@ -40,7 +45,7 @@
           ? detected.rawValue.slice(1, 7)
           : detected.rawValue;
 
-      product = await getProductByUpc(barcode);
+      product = getProductByUpc(barcode);
       status = product ? "found" : "not-found";
       return;
     }
@@ -73,9 +78,7 @@
 
 <video bind:this={videoElement} autoplay playsinline muted></video>
 
-{#if status === "loading"}
-  <p>Loading...</p>
-{:else if status === "idle"}
+{#if status === "idle"}
   <p>Please allow camera access and point your camera at a barcode.</p>
   <p>
     Data last updated

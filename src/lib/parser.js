@@ -3,34 +3,37 @@ import Papa from 'papaparse';
 let products = new Map();
 
 export async function initDatabase() {
-  return new Promise((resolve, reject) => {
-    Papa.parse('/data.csv', {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      error: (err) => reject(err),
-      complete: (results) => {
-        for (const row of results.data) {
-          if (!row.part_no) continue;
+  const resp = await fetch('/data.csv');
+  if (!resp.ok) throw new Error(`failed to fetch CSV: ${resp.status}`);
+  const csv = await resp.text();
 
-          const key = String(row.part_no).trim();
-          row.desc = row.desc?.trim() || "No description";
-          row.price1 = parseFloat(row.price1) || 0;
-
-          products.set(key, row);
-        }
-        resolve();
-      }
-    });
+  const results = Papa.parse(csv, {
+    header: true,
+    skipEmptyLines: true,
   });
+
+  const tempMap = new Map();
+  for (const row of results.data) {
+    if (!row.part_no) continue;
+
+    const key = String(row.part_no).trim();
+    row.desc = row.desc?.trim() || "No description";
+    row.price1 = parseFloat(row.price1) || 0;
+
+    tempMap.set(key, row);
+  }
+
+  products = tempMap;
 }
+
 
 export function getProductByUpc(upc) {
   return products.get(String(upc).trim()) || null;
 }
 
 async function formatRelative() {
-  const rawDate = await fetch('./last-update.txt').then(r => r.text()).then(t => t.trim()).catch(() => null);
+  // use absolute path so the worker/preview has no issues
+  const rawDate = await fetch('/last-update.txt').then(r => r.text()).then(t => t.trim()).catch(() => null);
   if (!rawDate) return { timeUpdated: 'unknown', timeColor: 'black' };
 
   const receivedDate = new Date(rawDate);
