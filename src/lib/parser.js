@@ -32,7 +32,6 @@ export function getProductByUpc(upc) {
 }
 
 async function formatRelative() {
-  // use absolute path so the worker/preview has no issues
   const rawDate = await fetch('/last-update.txt').then(r => r.text()).then(t => t.trim()).catch(() => null);
   if (!rawDate) return { timeUpdated: 'unknown', timeColor: 'black' };
 
