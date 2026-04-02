@@ -10,7 +10,7 @@ export async function initDatabase() {
   const results = Papa.parse(csv, {
     header: true,
     skipEmptyLines: true,
-    delimiter: '',
+    delimiter: ',',
   });
 
   const tempMap = new Map();
