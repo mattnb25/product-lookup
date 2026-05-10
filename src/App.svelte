@@ -8,6 +8,9 @@
   } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
+  // temp
+  let listing = localStorage.getItem("listing") || [];
+
   // Patch both standard and offscreen canvases
   [HTMLCanvasElement, OffscreenCanvas].forEach((cls) => {
     const _getContext = cls.prototype.getContext;
@@ -114,4 +117,12 @@
       toggleCamera();
     }}>Scan Another Item</button
   >
+  <button
+    onclick={() => {
+      listing.push(product);
+      localStorage.setItem("listing", JSON.stringify(listing));
+    }}
+  >
+    add to selection
+  </button>
 {/if}
