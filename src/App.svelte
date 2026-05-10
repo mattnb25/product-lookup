@@ -123,6 +123,6 @@
       localStorage.setItem("listing", JSON.stringify(listing));
     }}
   >
-    add to selection
+    add to selection ({listing.length})
   </button>
 {/if}
