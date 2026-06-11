@@ -77,7 +77,10 @@
 <video bind:this={videoElement} autoplay playsinline muted></video>
 
 {#if status === "idle"}
-  <p>Please allow camera access and point your camera at a barcode.</p>
+  <p>
+    Please allow camera access and point your camera at a barcode for product
+    details.
+  </p>
 {:else if status === "fetching"}
   <p>Searching for {barcode}...</p>
 {:else if status === "not-found"}
