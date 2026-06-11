@@ -1,20 +1,7 @@
 <script>
   import { onMount } from "svelte";
-  import {
-    initDatabase,
-    getProductByUpc,
-    timeUpdated,
-    timeColor,
-  } from "./lib/parser.js";
+  import { initDatabase, getProductByUpc } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
-  import Papa from "papaparse";
-
-  let listing = [];
-  try {
-    listing = JSON.parse(localStorage.getItem("listing") || "[]") || [];
-  } catch (error) {
-    listing = [];
-  }
 
   // Patch both standard and offscreen canvases
   [HTMLCanvasElement, OffscreenCanvas].forEach((cls) => {
@@ -62,8 +49,7 @@
   }
 
   async function toggleCamera() {
-    const isIdle = status === "idle";
-    if (isIdle) {
+    if (status === "idle") {
       videoElement.srcObject = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
@@ -72,15 +58,19 @@
       scan();
     } else {
       videoElement.pause();
+      videoElement.hidden = true;
       videoElement.srcObject?.getTracks().forEach((track) => track.stop());
       videoElement.srcObject = null;
-      videoElement.hidden = true;
     }
   }
 
   onMount(async () => {
-    await initDatabase();
-    await toggleCamera();
+    try {
+      await initDatabase();
+      await toggleCamera();
+    } catch (error) {
+      status = "csv-unavailable";
+    }
   });
 </script>
 
@@ -88,10 +78,6 @@
 
 {#if status === "idle"}
   <p>Please allow camera access and point your camera at a barcode.</p>
-  <p>
-    Data last updated
-    <span style="color: {timeColor}">{timeUpdated}</span>
-  </p>
 {:else if status === "fetching"}
   <p>Searching for {barcode}...</p>
 {:else if status === "not-found"}
@@ -118,30 +104,11 @@
   </article>
   <button
     onclick={() => {
-      listing.push(product);
-      localStorage.setItem("listing", JSON.stringify(listing));
       status = "idle";
       toggleCamera();
     }}>Scan Another Item</button
   >
-  <button
-    onclick={() => {
-      if (!listing.length) return;
-      const csv = Papa.unparse(listing, {
-        columns: ["part_no", "desc", "price1"],
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "listing.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }}
-  >
-    Download listing csv ({listing.length + 1})
-  </button>
+{:else if status === "csv-unavailable"}
+  <h2>Service unavailable</h2>
+  <p>Product information is currently unavailable. Please try again later.</p>
 {/if}

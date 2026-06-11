@@ -4,9 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "stamp": "git log -1 --format=%cI -- public/data.csv > public/last-update.txt",
-    "dev": "npm run stamp && vite",
-    "build": "npm run stamp && vite build",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
