@@ -1,5 +1,6 @@
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Inter", Arial, sans-serif;
+  letter-spacing: 0.02em;
   max-width: 400px;
   margin: auto;
   padding: 20px 20px;

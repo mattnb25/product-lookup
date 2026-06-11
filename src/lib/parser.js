@@ -10,6 +10,7 @@ export async function initDatabase() {
   }
   const csv = await resp.text();
 
+
   const results = Papa.parse(csv, {
     header: true,
     skipEmptyLines: true,
@@ -17,14 +18,19 @@ export async function initDatabase() {
   });
 
   for (const row of results.data) {
-    if (!row.part_no) continue;
+    const normalizedRow = Object.fromEntries(
+      Object.entries(row || {}).map(([key, value]) => [String(key).trim().toLowerCase(), value])
+    );
 
-    const key = String(row.part_no).trim();
-    row.desc = row.desc?.trim() || "No description";
-    row.price1 = parseFloat(row.price1) || 0;
+    if (!normalizedRow.part_no) continue;
 
-    products.set(key, row);
+    const key = String(normalizedRow.part_no);
+    normalizedRow.desc = normalizedRow.desc || 'No description';
+    normalizedRow.price1 = parseFloat(normalizedRow.price1) || 0;
+
+    products.set(key, normalizedRow);
   }
+
 }
 
 
