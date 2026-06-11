@@ -69,7 +69,7 @@
       await initDatabase();
       await toggleCamera();
     } catch (error) {
-      status = "csv-unavailable";
+      status = "unavailable";
     }
   });
 </script>
@@ -108,7 +108,7 @@
       toggleCamera();
     }}>Scan Another Item</button
   >
-{:else if status === "csv-unavailable"}
+{:else if status === "unavailable"}
   <h2>Service unavailable</h2>
   <p>Product information is currently unavailable. Please try again later.</p>
 {/if}
