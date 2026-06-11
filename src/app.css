@@ -58,3 +58,12 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
+
+select {
+  padding: 0;
+  margin-bottom: 20px;
+  background: none;
+  color: #333;
+  border: none;
+  font-weight: bold;
+}

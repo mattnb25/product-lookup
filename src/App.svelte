@@ -74,6 +74,10 @@
   });
 </script>
 
+<select>
+  <option value="home-tan">Home Tan Supermarket</option>
+</select>
+
 <video bind:this={videoElement} autoplay playsinline muted></video>
 
 {#if status === "idle"}
