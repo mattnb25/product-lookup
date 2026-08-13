@@ -35,8 +35,12 @@
   async function switchStore(storeKey) {
     selectedStore = storeKey;
     status = "idle";
-    toggleCamera();
-    await initDatabase(stores[storeKey]);
+    try {
+      await initDatabase(stores[storeKey]);
+      await toggleCamera();
+    } catch (error) {
+      status = "unavailable";
+    }
   }
 
   async function scan() {
@@ -103,11 +107,17 @@
   </select>
 </label>
 
-<video bind:this={videoElement} autoplay playsinline muted></video>
+<video
+  bind:this={videoElement}
+  hidden={status !== "idle"}
+  autoplay
+  playsinline
+  muted
+></video>
 
 {#if status === "idle"}
   <p>
-    Please allow camera access and point your camera at a barcode for product
+    Please allow camera access, then point your camera at a barcode for product
     details.
   </p>
 {:else if status === "fetching"}
@@ -141,6 +151,6 @@
     }}>Scan Another Item</button
   >
 {:else if status === "unavailable"}
-  <h2>Service unavailable</h2>
-  <p>Product information is currently unavailable. Please try again later.</p>
+  <h2 class="unavailable-title">Service unavailable</h2>
+  <p>Product information is not available. Please try again later. (Tans Mart not ready yet)</p>
 {/if}
