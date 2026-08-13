@@ -69,13 +69,21 @@ select {
 }
 
 select::picker(select) {
-  appearance: base-select
+  appearance: base-select;
+  padding: 8px;
 }
 
-select::checkmark {
+option {
+  margin-bottom: 4px;
+}
+
+option:last-child {
+  margin-bottom:  0;
+}
+
+option::checkmark {
   order: 1;
-  margin-left: auto;
-  content: "☑️";
+  content: "👈";
 }
 
 label {
