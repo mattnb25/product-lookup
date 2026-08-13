@@ -3,6 +3,14 @@
   import { initDatabase, getProductByUpc } from "./lib/parser.js";
   import { BarcodeDetectorPolyfill } from "@undecaf/barcode-detector-polyfill";
 
+  const stores = {
+    "Home Tan":
+      "https://dl.dropboxusercontent.com/scl/fi/j30z9sgz1jiygb8fka08p/stock.csv?rlkey=bt72miey1heg920jkynyo8cjt&st=7u26642h&dl=1",
+    "Tans Mart": "https://your-store-2-url-here",
+  };
+
+  let selectedStore = $state("Home Tan");
+
   // Patch both standard and offscreen canvases
   [HTMLCanvasElement, OffscreenCanvas].forEach((cls) => {
     const _getContext = cls.prototype.getContext;
@@ -23,6 +31,13 @@
   let status = $state("idle");
   let barcode = $state(null);
   let product = $state(null);
+
+  async function switchStore(storeKey) {
+    selectedStore = storeKey;
+    status = "idle";
+    toggleCamera();
+    await initDatabase(stores[storeKey]);
+  }
 
   async function scan() {
     if (status !== "idle") return;
@@ -66,7 +81,7 @@
 
   onMount(async () => {
     try {
-      await initDatabase();
+      await initDatabase(stores[selectedStore]);
       await toggleCamera();
     } catch (error) {
       status = "unavailable";
@@ -74,9 +89,19 @@
   });
 </script>
 
-<select>
-  <option value="home-tan">Home Tan Supermarket</option>
-</select>
+<label for="store-select"
+  >Store:
+
+  <select
+    id="store-select"
+    bind:value={selectedStore}
+    onchange={() => switchStore(selectedStore)}
+  >
+    {#each Object.keys(stores) as storeKey}
+      <option value={storeKey}>{storeKey}</option>
+    {/each}
+  </select>
+</label>
 
 <video bind:this={videoElement} autoplay playsinline muted></video>
 
