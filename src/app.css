@@ -65,6 +65,17 @@ select {
   background: none;
   color: #333;
   border: none;
+  appearance: base-select;
+}
+
+select::picker(select) {
+  appearance: base-select
+}
+
+select::checkmark {
+  order: 1;
+  margin-left: auto;
+  content: "☑️";
 }
 
 label {
