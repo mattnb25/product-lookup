@@ -1,96 +1,96 @@
 body {
-  font-family: "Inter", sans-serif;
-  max-width: 400px;
-  margin: auto;
-  padding: 20px 20px;
-  color: #333;
-  line-height: 1.5;
-}
+    font-family: "Inter", sans-serif;
+      max-width: 400px;
+        margin: auto;
+          padding: 20px 20px;
+            color: #333;
+              line-height: 1.5;
+              }
 
-video {
-  width: 100%;
-  object-fit: cover;
-  margin-bottom: 20px;
-  background-color: #000;
-  aspect-ratio: 4/3;
-}
+              video {
+                width: 100%;
+                  object-fit: cover;
+                    margin-bottom: 20px;
+                      background-color: #000;
+                        aspect-ratio: 4/3;
+                        }
 
-p {
-  margin-top: 0;
-}
+                        p {
+                          margin-top: 0;
+                          }
 
 
-article {
-  margin-bottom: 20px;
-  letter-spacing: 0.02em;
-}
+                          article {
+                            margin-bottom: 20px;
+                              letter-spacing: 0.02em;
+                              }
 
-article h2 {
-  font-size: 1rem;
-  margin: 0;
-  margin-bottom: 10px;
-}
+                              article h2 {
+                                font-size: 1rem;
+                                  margin: 0;
+                                    margin-bottom: 10px;
+                                    }
 
-dl {
-  margin: 0;
-}
+                                    dl {
+                                      margin: 0;
+                                      }
 
-dt {
-  font-size: 0.8rem;
-  color: SlateGray;
-  text-transform: uppercase;
-}
+                                      dt {
+                                        font-size: 0.8rem;
+                                          color: SlateGray;
+                                            text-transform: uppercase;
+                                            }
 
-dd {
-  margin: 0;
-  margin-bottom: 10px;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
+                                            dd {
+                                              margin: 0;
+                                                margin-bottom: 10px;
+                                                  font-weight: bold;
+                                                    font-size: 1.2rem;
+                                                    }
 
-button {
-  width: 100%;
-  padding: 10px;
-  border-radius: 4px;
-  background: #000;
-  color: #eee;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
+                                                    button {
+                                                      width: 100%;
+                                                        padding: 10px;
+                                                          border-radius: 4px;
+                                                            background: #000;
+                                                              color: #eee;
+                                                                border: none;
+                                                                  font-weight: bold;
+                                                                    cursor: pointer;
+                                                                    }
 
-select {
-  font: inherit;
-  margin-bottom: 0;
-  background: none;
-  color: #333;
-  border: none;
-  appearance: base-select;
-}
+                                                                    select {
+                                                                      font: inherit;
+                                                                        margin-bottom: 0;
+                                                                          background: none;
+                                                                            color: #333;
+                                                                              border: none;
+                                                                                appearance: base-select;
+                                                                                }
 
-select::picker(select) {
-  appearance: base-select;
-  padding: 8px;
-}
+                                                                                select::picker(select) {
+                                                                                  appearance: base-select;
+                                                                                    padding: 8px;
+                                                                                    }
 
-option {
-  margin-bottom: 4px;
-}
+                                                                                    option {
+                                                                                      margin-bottom: 4px;
+                                                                                      }
 
-option:last-child {
-  margin-bottom:  0;
-}
+                                                                                      option:last-child {
+                                                                                        margin-bottom:  0;
+                                                                                        }
 
-option::checkmark {
-  order: 1;
-  content: "👈";
-}
+                                                                                        option::checkmark {
+                                                                                          order: 1;
+                                                                                            content: "👈";
+                                                                                            }
 
-label {
-  display: inline-block;
-  margin-bottom: 10px;
-}
+                                                                                            label {
+                                                                                              display: inline-block;
+                                                                                                margin-bottom: 10px;
+                                                                                                }
 
-.unavailable-title {
-  margin-top: 0;
-}
+                                                                                                .unavailable-title {
+                                                                                                  margin-top: 0;
+                                                                                                  }
