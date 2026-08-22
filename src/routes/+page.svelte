@@ -1,26 +1,65 @@
 <script>
   import { onMount } from "svelte";
+  import Papa from "papaparse";
 
-  const stores = ["Home Tan", "Tans Mart"];
-  let store = $state(stores[0]);
-  let status = $state("scanning");
+  const stores = {
+    "Home Tan": "https://dl.dropboxusercontent.com/scl/fi/j30z9sgz1jiygb8fka08p/stock.csv?rlkey=bt72miey1heg920jkynyo8cjt&st=7u26642h&dl=1",
+    "Tans Mart": "", 
+  };
+
+  let store = $state("Home Tan");
+  let status = $state("loading");
   let barcode = $state();
   let product = $state();
   let video = $state();
   
   let detector, frame, stream;
+  const db = new Map();
 
-  // DRY API wrapper for both warmups and queries
-  const api = async (payload = {}) => {
-    const res = await fetch("/", { method: "POST", body: JSON.stringify({ storeName: store, ...payload }) });
-    if (!res.ok) throw res.status;
-    return res.json();
+  // Smart fetch: checks headers before pulling the whole MBs payload
+  const syncStore = async () => {
+    status = "loading";
+    try {
+      const url = stores[store];
+      if (!url) throw new Error("No URL");
+
+      const cache = await caches.open("csv-store");
+      const head = await fetch(url, { method: "HEAD" }).catch(() => ({}));
+      
+      // Try to get ETag or Last-Modified. (Fallback to Date if CORS hides them)
+      const rev = head.headers?.get("etag") || head.headers?.get("last-modified");
+      let res = await cache.match(url);
+      const cachedRev = await cache.match(`${url}-rev`).then(r => r?.text());
+
+      // Download only if we don't have it, or if the server confirms a change
+      if (!res || !rev || rev !== cachedRev) {
+        res = await fetch(url);
+        if (!res.ok) throw res.status;
+        
+        await cache.put(url, res.clone());
+        if (rev) await cache.put(`${url}-rev`, new Response(rev));
+      }
+
+      // Stream the parse to save memory
+      db.clear();
+      Papa.parse(await res.text(), {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => String(h).trim().toLowerCase(),
+        step: ({ data: { part_no, desc, price1 } }) => {
+          if (part_no) db.set(String(part_no).trim(), { desc: desc || "No description", price: +price1 || 0 });
+        }
+      });
+      
+      reset();
+    } catch {
+      status = "unavailable";
+    }
   };
 
   const reset = () => {
     barcode = product = null;
     status = "scanning";
-    api().catch(() => (status = "unavailable"));
   };
 
   async function scan() {
@@ -34,13 +73,8 @@
       if (det) {
         status = "resolving";
         barcode = det.format === "upc_e" ? det.rawValue.slice(1, 7) : det.rawValue;
-        
-        try {
-          product = (await api({ upc: barcode })).product;
-          status = "found";
-        } catch (e) {
-          status = e === 404 ? "not-found" : "unavailable";
-        }
+        product = db.get(barcode);
+        status = product ? "found" : "not-found";
         return; 
       }
     } catch {}
@@ -66,8 +100,6 @@
   });
 
   onMount(async () => {
-    reset();
-
     if (!window.BarcodeDetector) {
       try {
         [HTMLCanvasElement, OffscreenCanvas].forEach((c) => {
@@ -83,19 +115,22 @@
       }
     }
     detector = new window.BarcodeDetector({ formats: ["upc_a", "upc_e", "code_128", "ean_13", "ean_8"] });
+    syncStore();
   });
 </script>
 
 <label>
   Store:
-  <select bind:value={store} onchange={reset}>
-    {#each stores as name}
+  <select bind:value={store} onchange={syncStore}>
+    {#each Object.keys(stores) as name}
       <option value={name}>{name}</option>
     {/each}
   </select>
 </label>
 
-{#if status === "scanning"}
+{#if status === "loading"}
+  <p>Syncing {store} inventory...</p>
+{:else if status === "scanning"}
   <video bind:this={video} autoplay playsinline muted></video>
   <p>Allow camera access and point camera at a barcode for product details.</p>
 {:else if status === "resolving"}
@@ -108,7 +143,7 @@
         <dt>Description</dt>
         <dd>{product.desc}</dd>
         <dt>Price</dt>
-        <dd>${product.price1?.toFixed(2)}</dd>
+        <dd>${product.price?.toFixed(2)}</dd>
       </dl>
     {:else}
       <p style="font-size: 1.2rem;">Not found in system</p>
@@ -117,5 +152,5 @@
   <button onclick={reset}>Scan Another Item</button>
 {:else}
   <h2 class="unavailable-title">Service unavailable</h2>
-  <p>Camera access denied or network error (try again later).</p>
+  <p>Camera access denied, invalid store URL, or network error (try again later).</p>
 {/if}
