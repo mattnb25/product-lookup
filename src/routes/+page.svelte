@@ -17,12 +17,21 @@
   let detector, frame, stream;
   const db = new Map();
 
+  const getDownloadUrl = (value) => {
+    const url = new URL(value);
+    if (url.hostname === "www.dropbox.com" || url.hostname === "dropbox.com")
+      url.hostname = "dl.dropboxusercontent.com";
+    url.searchParams.set("dl", "1");
+    return url.href;
+  };
+
   // Smart fetch: checks headers before pulling the whole MBs payload
   const syncStore = async () => {
     status = "loading";
     try {
-      const url = stores[store];
-      if (!url) throw new Error("No URL");
+      const sourceUrl = stores[store];
+      if (!sourceUrl) throw new Error("No URL");
+      const url = getDownloadUrl(sourceUrl);
 
       const cache = await caches.open("csv-store");
       const head = await fetch(url, { method: "HEAD" }).catch(() => ({}));
