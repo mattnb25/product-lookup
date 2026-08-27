@@ -3,8 +3,9 @@
   import Papa from "papaparse";
 
   const stores = {
-    "Home Tan": "https://dl.dropboxusercontent.com/scl/fi/j30z9sgz1jiygb8fka08p/stock.csv?rlkey=bt72miey1heg920jkynyo8cjt&st=7u26642h&dl=1",
-    "Tans Mart": "", 
+    "Home Tan":
+      "https://www.dropbox.com/scl/fi/exrblrycdt6rsalwa0j0r/home-tan.csv?rlkey=ykc4ef3mtzajzl2yspf6ouyv1&st=xx9q5bji&e=1&dl=1",
+    "Tans Mart": "",
   };
 
   let store = $state("Home Tan");
@@ -12,7 +13,7 @@
   let barcode = $state();
   let product = $state();
   let video = $state();
-  
+
   let detector, frame, stream;
   const db = new Map();
 
@@ -25,17 +26,18 @@
 
       const cache = await caches.open("csv-store");
       const head = await fetch(url, { method: "HEAD" }).catch(() => ({}));
-      
+
       // Try to get ETag or Last-Modified. (Fallback to Date if CORS hides them)
-      const rev = head.headers?.get("etag") || head.headers?.get("last-modified");
+      const rev =
+        head.headers?.get("etag") || head.headers?.get("last-modified");
       let res = await cache.match(url);
-      const cachedRev = await cache.match(`${url}-rev`).then(r => r?.text());
+      const cachedRev = await cache.match(`${url}-rev`).then((r) => r?.text());
 
       // Download only if we don't have it, or if the server confirms a change
       if (!res || !rev || rev !== cachedRev) {
         res = await fetch(url);
         if (!res.ok) throw res.status;
-        
+
         await cache.put(url, res.clone());
         if (rev) await cache.put(`${url}-rev`, new Response(rev));
       }
@@ -47,10 +49,14 @@
         skipEmptyLines: true,
         transformHeader: (h) => String(h).trim().toLowerCase(),
         step: ({ data: { part_no, desc, price1 } }) => {
-          if (part_no) db.set(String(part_no).trim(), { desc: desc || "No description", price: +price1 || 0 });
-        }
+          if (part_no)
+            db.set(String(part_no).trim(), {
+              desc: desc || "No description",
+              price: +price1 || 0,
+            });
+        },
       });
-      
+
       reset();
     } catch {
       status = "unavailable";
@@ -72,10 +78,11 @@
       const [det] = await detector.detect(video);
       if (det) {
         status = "resolving";
-        barcode = det.format === "upc_e" ? det.rawValue.slice(1, 7) : det.rawValue;
+        barcode =
+          det.format === "upc_e" ? det.rawValue.slice(1, 7) : det.rawValue;
         product = db.get(barcode);
         status = product ? "found" : "not-found";
-        return; 
+        return;
       }
     } catch {}
     frame = requestAnimationFrame(scan);
@@ -83,10 +90,12 @@
 
   $effect(() => {
     if (status !== "scanning" || !video) return;
-    
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" } })
       .then((s) => {
-        if (status !== "scanning") return s.getTracks().forEach(t => t.stop());
+        if (status !== "scanning")
+          return s.getTracks().forEach((t) => t.stop());
         video.srcObject = stream = s;
         video.play();
         scan();
@@ -106,15 +115,23 @@
           if (!c) return;
           const og = c.prototype.getContext;
           c.prototype.getContext = function (t, a) {
-            return og.call(this, t, t === "2d" ? { ...a, willReadFrequently: true } : a);
+            return og.call(
+              this,
+              t,
+              t === "2d" ? { ...a, willReadFrequently: true } : a,
+            );
           };
         });
-        window.BarcodeDetector = (await import("@undecaf/barcode-detector-polyfill")).BarcodeDetectorPolyfill;
+        window.BarcodeDetector = (
+          await import("@undecaf/barcode-detector-polyfill")
+        ).BarcodeDetectorPolyfill;
       } catch {
         return (status = "unavailable");
       }
     }
-    detector = new window.BarcodeDetector({ formats: ["upc_a", "upc_e", "code_128", "ean_13", "ean_8"] });
+    detector = new window.BarcodeDetector({
+      formats: ["upc_a", "upc_e", "code_128", "ean_13", "ean_8"],
+    });
     syncStore();
   });
 </script>
@@ -152,5 +169,7 @@
   <button onclick={reset}>Scan Another Item</button>
 {:else}
   <h2 class="unavailable-title">Service unavailable</h2>
-  <p>Camera access denied, invalid store URL, or network error (try again later).</p>
+  <p>
+    Camera access denied, invalid store URL, or network error (try again later).
+  </p>
 {/if}
